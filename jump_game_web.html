@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Jump!</title>
+<style>
+  body {
+    margin: 0;
+    background: #111;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  canvas {
+    display: block;
+    image-rendering: pixelated;
+  }
+  #msg {
+    color: #aaa;
+    font-family: sans-serif;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+<canvas id="c" width="480" height="300"></canvas>
+<div id="msg">スペースキー または タップ でジャンプ</div>
+<script>
+const W = 480, H = 300;
+const GY = 0.5, JUMP = -12, GROUND = H - 60, SPEED = 5;
+
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+let py, vy, onGround, mountains, score, frame, state;
+
+function newMountain() {
+  return { x: W, h: 30 + Math.floor(Math.random() * 51) };
+}
+
+function init() {
+  py = GROUND; vy = 0; onGround = true;
+  mountains = [newMountain()];
+  score = 0; frame = 0; state = "play";
+  nextSpawn = 60 + Math.floor(Math.random() * 61);
+}
+
+let nextSpawn = 90;
+
+function jump() {
+  if (state === "play" && onGround) {
+    vy = JUMP; onGround = false;
+  } else if (state === "over") {
+    init();
+  }
+}
+
+document.addEventListener("keydown", e => {
+  if (e.code === "Space") { e.preventDefault(); jump(); }
+});
+canvas.addEventListener("pointerdown", () => jump());
+
+function update() {
+  if (state !== "play") return;
+  frame++; score++;
+
+  vy += GY;
+  py += vy;
+  if (py >= GROUND) { py = GROUND; vy = 0; onGround = true; }
+
+  const spd = SPEED + Math.floor(score / 200);
+  for (const m of mountains) m.x -= spd;
+  mountains = mountains.filter(m => m.x > -60);
+
+  if (frame >= nextSpawn) {
+    mountains.push(newMountain());
+    nextSpawn = frame + 60 + Math.floor(Math.random() * 61);
+  }
+
+  const px1 = 60, px2 = 90;
+  for (const m of mountains) {
+    const mx1 = m.x, mx2 = m.x + 40;
+    const myTop = GROUND - m.h + 60;
+    if (px2 > mx1 && px1 < mx2 && py + 40 > myTop) {
+      state = "over";
+    }
+  }
+}
+
+function draw() {
+  // 背景
+  ctx.fillStyle = "#1e1e32";
+  ctx.fillRect(0, 0, W, H);
+
+  // 地面
+  ctx.fillStyle = "#507830";
+  ctx.fillRect(0, GROUND + 40, W, 60);
+
+  // 山（三角形）
+  ctx.fillStyle = "#64a064";
+  for (const m of mountains) {
+    const bx = m.x, bw = 40, bh = m.h;
+    const baseY = GROUND + 40;
+    ctx.beginPath();
+    ctx.moveTo(bx + bw / 2, baseY - bh);
+    ctx.lineTo(bx,          baseY);
+    ctx.lineTo(bx + bw,     baseY);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // プレイヤー（丸）
+  ctx.fillStyle = "#ff6b6b";
+  ctx.beginPath();
+  ctx.arc(70, py + 20, 20, 0, Math.PI * 2);
+  ctx.fill();
+
+  // スコア
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 20px sans-serif";
+  ctx.fillText("スコア: " + score, 10, 32);
+
+  // ゲームオーバー
+  if (state === "over") {
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.fillRect(0, 90, W, 110);
+    ctx.fillStyle = "#ffdc32";
+    ctx.font = "bold 28px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("ゲームオーバー！", W / 2, 130);
+    ctx.font = "18px sans-serif";
+    ctx.fillText("スペース or タップ でリスタート", W / 2, 165);
+    ctx.textAlign = "left";
+  }
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+init();
+loop();
+</script>
+</body>
+</html>
