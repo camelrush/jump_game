@@ -79,4 +79,4 @@ MIT License
 `jump_game_web.html` をダウンロードしてブラウザで開くと、インストールなしでゲームを体験できます。
 スマートフォンのタップにも対応しています。
 
-**→ [ブラウザ版で遊ぶ](jump_game_web.html)**
+**→ [ブラウザ版で遊ぶ](https://camelrush.github.io/jump_game/jump_game_web.html)**
